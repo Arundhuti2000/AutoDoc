@@ -55,40 +55,27 @@ FILE_TYPES = {
 
 def analyze_architecture_with_ollama(source_path: str, file_types_found: dict) -> dict:
     """Generate a comprehensive architectural overview using Ollama."""
-    # Prepare file types string for context
-    file_types_str = "\n".join([f"- {ftype}: {count} files" for ftype, count in file_types_found.items()])
-    
-    prompt = f"""Provide a comprehensive architectural analysis for this project. 
-    Project File Composition:
+
+ # Read the source code from the files in source_path
+    source_code=""
+    for pattern in ['**/*.py', '**/Dockerfile', '**/Makefile']:  # Add more patterns as needed
+        for file_path in pathlib.Path(source_path).rglob(pattern):
+            if file_path.is_file() and not any(excluded in str(file_path) for excluded in ['venv', '.venv', 'node_modules', '__pycache__', '.git']):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        source_code += f"\n# File: {file_path.name}\n"
+                        source_code += f.read()
+                except Exception as e:
+                    print(f"Error reading file {file_path}: {str(e)}")
+        
+    file_types_str = "File Types Distribution:\n" + "\n".join([
+            f"- {ftype}: {count} files" 
+            for ftype, count in file_types_found.items()
+        ])
+    prompt = f"""Provide a comprehensive architectural analysis for this project. Project File Composition: ```python
+    {source_code}
     {file_types_str}
-
-    Analyze and provide details for the following sections:
-
-    1. Project Architecture
-    - Identify the overall architectural pattern
-    - Describe the system's structural approach
-
-    2. Project Overview
-    - Summarize the project's primary purpose
-    - Highlight the main objectives
-
-    3. Tech Stack
-    - List all primary technologies used
-    - Explain the rationale behind technology choices
-
-    4. Key Features in Components
-    - Break down main system components
-    - Describe the role and responsibility of each component
-
-    5. Implementation Flow
-    - Describe the high-level workflow
-    - Explain how different components interact
-
-    6. Future Improvements
-    - Suggest potential enhancements
-    - Identify areas for optimization or scaling
-
-    Provide a structured, clear, and insightful analysis that gives a complete picture of the project's architecture and potential."""
+    Analyze and provide details for the following sections: 1. Project Architecture - Identify the overall architectural pattern - Describe the system's structural approach 2. Project Overview - Summarize the project's primary purpose - Highlight the main objectives 3. Tech Stack - List all primary technologies used - Explain the rationale behind technology choices 4. Key Features in Components - Break down main system components - Describe the role and responsibility of each component 5. Implementation Flow - Describe the high-level workflow - Explain how different components interact 6. Future Improvements - Suggest potential enhancements - Identify areas for optimization or scaling Provide a structured, clear, and insightful analysis that gives a complete picture of the project's architecture and potential."""
     
     try:
         response = requests.post('http://localhost:11434/api/generate', 
@@ -117,6 +104,8 @@ def analyze_architecture_with_ollama(source_path: str, file_types_found: dict) -
         formatted_sections = {
             key: '\n'.join(value) for key, value in sections.items()
         }
+        
+
         
         return formatted_sections
     
@@ -147,7 +136,7 @@ def generate_html_report(source_path: str, dest_path: str, architecture_analysis
         "Tech Stack", 
         "Key Features in Components", 
         "Implementation Flow", 
-        "Future Improvements"
+        "Future Improvements",
     ]
     section_icons = {
         "Project Architecture": "🏗️",
@@ -155,7 +144,7 @@ def generate_html_report(source_path: str, dest_path: str, architecture_analysis
         "Tech Stack": "💻",
         "Key Features in Components": "🧩",
         "Implementation Flow": "🔀",
-        "Future Improvements": "🚀"
+        "Future Improvements": "🚀",
     }
     
     for section in section_order:
