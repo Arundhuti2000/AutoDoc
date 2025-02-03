@@ -32,7 +32,7 @@ AutoDoc is a web application that automatically generates comprehensive document
 ### Backend Setup
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/autodoc.git
+git clone https://github.com/arundhuti2000/autodoc.git
 cd autodoc
 ```
 
